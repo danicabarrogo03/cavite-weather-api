@@ -3,26 +3,71 @@ from datetime import datetime
 from config import get_weather_info, get_heat_index_status, get_weather_advice
 
 
-def apply_custom_css():
-    """Injects custom CSS to make Streamlit look sleeker."""
-    st.markdown("""
+def apply_dynamic_css(condition_desc):
+    """Hacks Streamlit's default UI to inject Glassmorphism and Dynamic Gradients"""
+
+    # Determine Background Gradient based on weather
+    if condition_desc in ["Sunny", "Partly Cloudy"]:
+        bg_gradient = "linear-gradient(135deg, #ff8c00, #ffc832)"
+    elif condition_desc in ["Rainy", "Drizzle", "Showers", "Thunderstorm"]:
+        bg_gradient = "linear-gradient(135deg, #14325a, #3c6ea0)"
+    else:
+        bg_gradient = "linear-gradient(135deg, #5a646e, #a0aab4)"
+
+    st.markdown(f"""
         <style>
-        div[data-testid="stMetricValue"] { font-size: 4rem !important; font-weight: 800; }
-        .heat-box {
-            background-color: rgba(255, 215, 0, 0.1); border-left: 5px solid #FFD700;
-            padding: 15px; border-radius: 5px; margin-bottom: 20px;
-        }
-        .advice-text { font-style: italic; color: #555; text-align: center; margin-bottom: 30px; }
-        .forecast-row {
-            display: flex; justify-content: space-between; padding: 10px;
-            border-bottom: 1px solid rgba(128,128,128,0.2);
-        }
+        /* 1. Force full app background */
+        .stApp {{
+            background: {bg_gradient};
+            background-attachment: fixed;
+        }}
+
+        /* 2. Glassmorphism Main Container */
+        .main .block-container {{
+            background: rgba(255, 255, 255, 0.15) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            border-radius: 24px !important;
+            padding: 40px !important;
+            max-width: 450px !important;
+            margin-top: 40px !important;
+            margin-bottom: 40px !important;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+        }}
+
+        /* 3. Global Text Colors */
+        h1, h2, h3, h4, p, span, div {{ color: white !important; }}
+
+        /* 4. Streamlit Metric Overrides */
+        div[data-testid="stMetricValue"] {{ font-size: 4.5rem !important; font-weight: 800 !important; color: white !important; text-align: center; }}
+        div[data-testid="stMetricLabel"] {{ color: rgba(255,255,255,0.9) !important; font-size: 1.5rem !important; text-align: center; }}
+        div[data-testid="stMetric"] {{ display: flex; flex-direction: column; align-items: center; justify-content: center; }}
+
+        /* 5. Custom Widgets */
+        .heat-box {{
+            background-color: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 215, 0, 0.4);
+            padding: 12px; border-radius: 12px; margin-bottom: 20px; text-align: center; cursor: pointer;
+        }}
+        .heat-box:hover {{ background-color: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 215, 0, 0.8); }}
+
+        .advice-text {{ font-style: italic; color: rgba(255,255,255,0.9) !important; text-align: center; margin-bottom: 30px; font-size: 14px; }}
+
+        .forecast-row {{
+            display: flex; justify-content: space-between; padding: 12px 15px;
+            border-radius: 10px; background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 8px; transition: background 0.3s;
+        }}
+        .forecast-row:hover {{ background: rgba(255, 255, 255, 0.25); border: 1px solid rgba(255, 255, 255, 0.5); }}
+
+        /* 6. Clean up native popover and selectbox elements */
+        .stSelectbox > div > div {{ background-color: rgba(255,255,255,0.2) !important; color: white !important; border: 1px solid rgba(255,255,255,0.4) !important; border-radius: 10px !important; }}
+        button[kind="secondary"] {{ background-color: rgba(255,255,255,0.1) !important; border-radius: 10px !important; color: white !important; border: 1px solid rgba(255,255,255,0.3) !important; }}
         </style>
     """, unsafe_allow_html=True)
 
 
 def render_dashboard(data):
-    """Renders the entire weather UI based on provided data."""
     current = data.get("current", {})
     daily = data.get("daily", {})
 
@@ -34,20 +79,20 @@ def render_dashboard(data):
     status = get_heat_index_status(feels_like)
     advice = get_weather_advice(desc, status)
 
-    # 1. Main Weather Section
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.metric(label=f"{icon} {desc}", value=f"{temp}°C")
+    # APPLY CSS FIRST based on the current weather condition
+    apply_dynamic_css(desc)
 
-    # 2. Heat Index & Advice
+    # 1. Main Weather Section
+    st.metric(label=f"{icon} {desc}", value=f"{temp}°C")
+
+    # 2. Heat Index
     st.markdown(f"""
         <div class='heat-box'>
-            <h4 style='margin:0; color: #b8860b;'>Heat Index: {feels_like}°C ({status})</h4>
+            <h4 style='margin:0; color: #FFD700 !important; font-size: 16px;'>Heat Index: {feels_like}°C ({status})</h4>
         </div>
     """, unsafe_allow_html=True)
 
-    # --- THE FIX: Using st.popover instead of @st.dialog ---
-    with st.popover("ℹ️ What does this Heat Index mean?"):
+    with st.popover("ℹ️ Heat Index Guide", use_container_width=True):
         st.markdown("""
         **Perceived Danger Levels:**
         * 🟢 **Safe:** Below 27°C
@@ -60,7 +105,9 @@ def render_dashboard(data):
     st.markdown(f"<div class='advice-text'>{advice}</div>", unsafe_allow_html=True)
 
     # 3. 7-Day Forecast
-    st.subheader("7-Day Forecast")
+    st.markdown(
+        "<h4 style='text-transform: uppercase; font-size: 15px; letter-spacing: 1px; margin-top: 15px;'>7-Day Forecast</h4>",
+        unsafe_allow_html=True)
     days = daily.get("time", [])
     codes = daily.get("weather_code", [])
     max_temps = daily.get("temperature_2m_max", [])
@@ -71,11 +118,10 @@ def render_dashboard(data):
         d_desc, d_icon = get_weather_info(codes[i])
         d_temp = round(max_temps[i])
 
-        # HTML injection for clean, responsive rows
         st.markdown(f"""
             <div class='forecast-row'>
-                <strong>{day_name}</strong>
-                <span>{d_icon} {d_desc}</span>
+                <strong style='width: 90px;'>{day_name}</strong>
+                <span style='flex: 1; text-align: center; color: rgba(255,255,255,0.85) !important;'>{d_icon} {d_desc}</span>
                 <strong>{d_temp}°C</strong>
             </div>
         """, unsafe_allow_html=True)
