@@ -21,19 +21,6 @@ def apply_custom_css():
     """, unsafe_allow_html=True)
 
 
-@st.dialog("PAGASA Heat Index Guide")
-def show_heat_index_guide():
-    """Streamlit's native modal popup for the Heat Index Guide."""
-    st.markdown("""
-    **Perceived Danger Levels:**
-    * 🟢 **Safe:** Below 27°C
-    * 🟡 **Caution:** 27°C - 32°C
-    * 🟠 **Extreme Caution:** 33°C - 41°C
-    * 🔴 **Danger:** 42°C - 51°C
-    * 🟤 **Extreme Danger:** 52°C and above
-    """)
-
-
 def render_dashboard(data):
     """Renders the entire weather UI based on provided data."""
     current = data.get("current", {})
@@ -59,8 +46,16 @@ def render_dashboard(data):
         </div>
     """, unsafe_allow_html=True)
 
-    if st.button("ℹ️ What does this Heat Index mean?"):
-        show_heat_index_guide()
+    # --- THE FIX: Using st.popover instead of @st.dialog ---
+    with st.popover("ℹ️ What does this Heat Index mean?"):
+        st.markdown("""
+        **Perceived Danger Levels:**
+        * 🟢 **Safe:** Below 27°C
+        * 🟡 **Caution:** 27°C - 32°C
+        * 🟠 **Extreme Caution:** 33°C - 41°C
+        * 🔴 **Danger:** 42°C - 51°C
+        * 🟤 **Extreme Danger:** 52°C and above
+        """)
 
     st.markdown(f"<div class='advice-text'>{advice}</div>", unsafe_allow_html=True)
 
