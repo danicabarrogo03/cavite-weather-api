@@ -73,12 +73,10 @@ def render_dashboard(data):
     feels_like = round(current.get("apparent_temperature", 0))
     code = current.get("weather_code", 0)
 
-    # FIXED: Added definition for desc and icon
     desc, icon = get_weather_info(code)
     status = get_heat_index_status(feels_like)
     advice = get_weather_advice(desc, status)
 
-    # FIXED: Passed feels_like as an argument
     apply_dynamic_css(desc, feels_like)
 
     # 1. Main Weather Section

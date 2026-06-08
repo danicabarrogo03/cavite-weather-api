@@ -8,8 +8,6 @@ st.set_page_config(page_title="District 1 Weather", page_icon="⛅", layout="cen
 # --- ADD YOUR API KEY HERE ---
 API_KEY = "db2bbb06ef9c44a0a65223312260806"
 
-ui.apply_dynamic_css("Cloudy")
-
 selected_city = st.selectbox("Select Municipality", list(CITIES.keys()))
 
 
