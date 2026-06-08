@@ -28,7 +28,8 @@ def fetch_weather(city_name):
             "current": {
                 "temperature_2m": data['current']['temp_c'],
                 "apparent_temperature": data['current']['feelslike_c'],
-                "weather_code": data['current']['condition']['code']
+                "weather_code": data['current']['condition']['code'],
+                "text": data['current']['condition']['text']
             },
             "daily": {
                 "time": [f["date"] for f in data['forecast']['forecastday']],

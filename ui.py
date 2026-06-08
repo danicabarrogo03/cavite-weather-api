@@ -3,21 +3,27 @@ from datetime import datetime
 from config import get_weather_info, get_heat_index_status, get_weather_advice
 
 
-def apply_dynamic_css(condition_desc="Cloudy"):
-    """Injects Glassmorphism CSS aggressively targeting Streamlit classes."""
+def apply_dynamic_css(condition_desc, feels_like):
+    """Injects Glassmorphism CSS with dynamic background based on weather and heat."""
 
-    if condition_desc in ["Sunny", "Partly Cloudy"]:
-        bg_gradient = "linear-gradient(135deg, #ff8c00, #ffc832)"
-    elif condition_desc in ["Rainy", "Drizzle", "Showers", "Thunderstorm"]:
-        bg_gradient = "linear-gradient(135deg, #14325a, #3c6ea0)"
+    # 1. Base Gradient based on Weather
+    if "Sunny" in condition_desc or "Clear" in condition_desc:
+        base_grad = "#ff8c00, #ffc832"
+    elif "Rain" in condition_desc or "Drizzle" in condition_desc:
+        base_grad = "#14325a, #3c6ea0"
     else:
-        bg_gradient = "linear-gradient(135deg, #5a646e, #a0aab4)"
+        base_grad = "#5a646e, #a0aab4"
+
+    # 2. Temperature Tint
+    tint = "rgba(255, 0, 0, 0.3)" if feels_like > 35 else "rgba(0,0,0,0)"
 
     st.markdown(f"""
         <style>
         /* Force background on the main app wrapper */
-        .stApp, [data-testid="stAppViewContainer"] {{
-            background: {bg_gradient} !important;
+        .stApp {{
+            background: linear-gradient(135deg, {base_grad});
+            background-blend-mode: overlay;
+            background-color: {tint};
             background-attachment: fixed !important;
         }}
 
@@ -55,10 +61,6 @@ def apply_dynamic_css(condition_desc="Cloudy"):
             display: flex; justify-content: space-between; padding: 12px 15px;
             border-radius: 10px; background: rgba(255, 255, 255, 0.1); margin-bottom: 8px;
         }}
-
-        /* Clean up inputs */
-        .stSelectbox div[data-baseweb="select"] > div {{ background-color: rgba(255,255,255,0.2) !important; border: 1px solid rgba(255,255,255,0.4) !important; }}
-        .stButton button {{ background-color: rgba(255,255,255,0.1) !important; border: 1px solid rgba(255,255,255,0.3) !important; width: 100%; border-radius: 10px !important; }}
         </style>
     """, unsafe_allow_html=True)
 
@@ -71,9 +73,13 @@ def render_dashboard(data):
     feels_like = round(current.get("apparent_temperature", 0))
     code = current.get("weather_code", 0)
 
+    # FIXED: Added definition for desc and icon
     desc, icon = get_weather_info(code)
     status = get_heat_index_status(feels_like)
     advice = get_weather_advice(desc, status)
+
+    # FIXED: Passed feels_like as an argument
+    apply_dynamic_css(desc, feels_like)
 
     # 1. Main Weather Section
     st.metric(label=f"{icon} {desc}", value=f"{temp}°C")
@@ -101,6 +107,7 @@ def render_dashboard(data):
     st.markdown(
         "<h4 style='text-transform: uppercase; font-size: 15px; letter-spacing: 1px; margin-top: 15px;'>7-Day Forecast</h4>",
         unsafe_allow_html=True)
+
     days = daily.get("time", [])
     codes = daily.get("weather_code", [])
     max_temps = daily.get("temperature_2m_max", [])
