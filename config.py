@@ -8,15 +8,12 @@ CITIES = {
 
 
 def get_weather_info(code):
-    if code == 0: return "Sunny", "☀️"
-    if code in [1, 2, 3]: return "Partly Cloudy", "⛅"
-    if code in [45, 48]: return "Foggy", "🌫️"
-    if code in [51, 53, 55, 56, 57]: return "Drizzle", "🌦️"
-    if code in [61, 63, 65, 66, 67]: return "Rainy", "🌧️"
-    if code in [80, 81, 82]: return "Showers", "☔"
-    if code in [95, 96, 99]: return "Thunderstorm", "⛈️"
-    return "Cloudy", "☁️"
-
+    # Basic WeatherAPI code mapping
+    if code in [1000]: return "Sunny", "☀️"
+    if code in [1003, 1006, 1009]: return "Cloudy", "☁️"
+    if code in [1063, 1180, 1183]: return "Rainy", "🌧️"
+    if code in [1087, 1273]: return "Thunderstorm", "⛈️"
+    return "Partly Cloudy", "⛅"
 
 def get_heat_index_status(temp):
     if temp < 27: return "Safe"
