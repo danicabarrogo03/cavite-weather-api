@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>District 1 Cavite Weather</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;700;800&display=swap');
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+
+        body {
+            /* Fallback dark gradient */
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            transition: background 0.5s ease;
+            color: white; padding: 20px;
+        }
+
+        /* Dynamic Weather Backgrounds */
+        body.Sunny { background: linear-gradient(135deg, #ff8c00, #ffc832); }
+        body.Cloudy { background: linear-gradient(135deg, #5a646e, #a0aab4); }
+        body.Rainy { background: linear-gradient(135deg, #14325a, #3c6ea0); }
+
+        /* The Glassmorphism Card */
+        .widget-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 24px;
+            width: 100%; max-width: 420px;
+            padding: 35px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            display: flex; flex-direction: column; gap: 15px;
+        }
+
+        select {
+            background: rgba(255, 255, 255, 0.2); color: white;
+            border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 12px;
+            padding: 12px 15px; font-size: 18px; font-weight: 500;
+            outline: none; cursor: pointer;
+        }
+        select option { background: #2b2b2b; color: white; }
+
+        .main-weather { text-align: center; margin-top: 10px; }
+        .temp { font-size: 85px; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+        .condition { font-size: 22px; font-weight: 500; color: rgba(255, 255, 255, 0.9); margin-top: 5px; }
+
+        .heat-index {
+            background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 215, 0, 0.4);
+            border-radius: 12px; padding: 12px; text-align: center;
+            color: #FFD700; font-weight: 700; cursor: pointer; transition: all 0.3s ease;
+        }
+        .heat-index:hover { background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 215, 0, 0.8); }
+
+        .advice { text-align: center; font-size: 14px; font-style: italic; color: rgba(255, 255, 255, 0.9); }
+        .forecast-title { font-size: 15px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; }
+        .forecast-list { display: flex; flex-direction: column; gap: 8px; }
+
+        .forecast-card {
+            background: rgba(255, 255, 255, 0.1); border: 1px solid transparent; border-radius: 10px;
+            padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;
+            transition: all 0.2s ease;
+        }
+        .forecast-card:hover { background: rgba(255, 255, 255, 0.25); border-color: rgba(255, 255, 255, 0.5); }
+        .day { font-weight: bold; width: 50px; }
+        .f-condition { color: rgba(255, 255, 255, 0.85); flex: 1; text-align: center; }
+        .f-temp { font-weight: bold; text-align: right; }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px);
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .modal-content {
+            background: rgba(25, 25, 25, 0.95); border: 1px solid rgba(255, 215, 0, 0.4);
+            border-radius: 18px; width: 90%; max-width: 360px; padding: 30px;
+            display: flex; flex-direction: column; gap: 12px;
+            transform: scale(0.9); transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        .modal-title { color: #FFD700; font-size: 22px; font-weight: 800; text-align: center; }
+        .modal-desc { color: rgba(255, 255, 255, 0.6); font-size: 13px; text-align: center; margin-bottom: 10px; }
+        .tier-row { background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 10px 15px; display: flex; justify-content: space-between; }
+        .close-btn {
+            background: rgba(255, 215, 0, 0.15); color: #FFD700; border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 10px; padding: 10px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px;
+        }
+        .close-btn:hover { background: rgba(255, 215, 0, 0.3); }
+    </style>
+</head>
+<body class="Sunny">
+
+    <div class="widget-container">
+        <select id="city-select" onchange="fetchWeather()">
+            <option value="Cavite City">Cavite City</option>
+            <option value="Kawit">Kawit</option>
+            <option value="Noveleta">Noveleta</option>
+            <option value="Rosario">Rosario</option>
+        </select>
+
+        <div class="main-weather">
+            <div class="temp" id="main-temp">--°C</div>
+            <div class="condition" id="main-cond">Fetching Live Data...</div>
+        </div>
+
+        <div class="heat-index" onclick="toggleModal(true)" id="heat-index">
+            Heat Index: --°C
+        </div>
+
+        <div class="advice" id="advice-text">
+            Loading local conditions...
+        </div>
+
+        <div class="forecast-title">7-Day Forecast</div>
+        <div class="forecast-list" id="forecast-list">
+            </div>
+    </div>
+
+    <div class="modal-overlay" id="modal" onclick="toggleModal(false)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-title">PAGASA Heat Index</div>
+            <div class="modal-desc">Perceived Danger Levels</div>
+
+            <div class="tier-row"><span style="color: #4CAF50; font-weight: bold;">Safe</span><span>Below 27°C</span></div>
+            <div class="tier-row"><span style="color: #FFEB3B; font-weight: bold;">Caution</span><span>27°C - 32°C</span></div>
+            <div class="tier-row"><span style="color: #FF9800; font-weight: bold;">Extreme Caution</span><span>33°C - 41°C</span></div>
+            <div class="tier-row"><span style="color: #F44336; font-weight: bold;">Danger</span><span>42°C - 51°C</span></div>
+            <div class="tier-row"><span style="color: #B71C1C; font-weight: bold;">Extreme Danger</span><span>52°C +</span></div>
+
+            <button class="close-btn" onclick="toggleModal(false)">Got it</button>
+        </div>
+    </div>
+
+    <script>
+        function toggleModal(show) {
+            const modal = document.getElementById('modal');
+            show ? modal.classList.add('active') : modal.classList.remove('active');
+        }
+
+        async function fetchWeather() {
+            const city = document.getElementById('city-select').value;
+            const tempEl = document.getElementById('main-temp');
+            const condEl = document.getElementById('main-cond');
+            const heatEl = document.getElementById('heat-index');
+            const adviceEl = document.getElementById('advice-text');
+            const listEl = document.getElementById('forecast-list');
+
+            condEl.innerText = "Fetching Live Data...";
+
+            try {
+                const response = await fetch(`/api/weather/${city}`);
+                const data = await response.json();
+
+                // Dynamic Background Shift
+                let bgCategory = 'Cloudy';
+                if(["Sunny", "Partly Cloudy"].includes(data.condition)) bgCategory = 'Sunny';
+                if(["Rainy", "Drizzle", "Showers", "Thunderstorm"].includes(data.condition)) bgCategory = 'Rainy';
+                document.body.className = bgCategory;
+
+                // Update Top Labels
+                tempEl.innerText = `${data.temp}°C`;
+                condEl.innerText = `${data.icon} ${data.condition}`;
+                heatEl.innerText = `Heat Index: ${data.heat_index}°C (${data.heat_status})`;
+                adviceEl.innerText = data.advice;
+
+                // Render 7-Day Hoverable Forecast
+                listEl.innerHTML = '';
+                data.forecast.forEach(day => {
+                    listEl.innerHTML += `
+                        <div class="forecast-card">
+                            <div class="day">${day.day}</div>
+                            <div class="f-condition">${day.icon} ${day.desc}</div>
+                            <div class="f-temp">${day.temp}°C</div>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                condEl.innerText = "⚠️ Network Error";
+            }
+        }
+
+        // Fetch on Load & Auto-Refresh
+        fetchWeather();
+        setInterval(fetchWeather, 15 * 60 * 1000); // 15 mins
+    </script>
+</body>
+</html>
