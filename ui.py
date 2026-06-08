@@ -3,10 +3,9 @@ from datetime import datetime
 from config import get_weather_info, get_heat_index_status, get_weather_advice
 
 
-def apply_dynamic_css(condition_desc):
-    """Hacks Streamlit's default UI to inject Glassmorphism and Dynamic Gradients"""
+def apply_dynamic_css(condition_desc="Cloudy"):
+    """Injects Glassmorphism CSS aggressively targeting Streamlit classes."""
 
-    # Determine Background Gradient based on weather
     if condition_desc in ["Sunny", "Partly Cloudy"]:
         bg_gradient = "linear-gradient(135deg, #ff8c00, #ffc832)"
     elif condition_desc in ["Rainy", "Drizzle", "Showers", "Thunderstorm"]:
@@ -16,14 +15,14 @@ def apply_dynamic_css(condition_desc):
 
     st.markdown(f"""
         <style>
-        /* 1. Force full app background */
-        .stApp {{
-            background: {bg_gradient};
-            background-attachment: fixed;
+        /* Force background on the main app wrapper */
+        .stApp, [data-testid="stAppViewContainer"] {{
+            background: {bg_gradient} !important;
+            background-attachment: fixed !important;
         }}
 
-        /* 2. Glassmorphism Main Container */
-        .main .block-container {{
+        /* Glassmorphism Main Container */
+        [data-testid="stMainBlockContainer"] {{
             background: rgba(255, 255, 255, 0.15) !important;
             backdrop-filter: blur(20px) !important;
             -webkit-backdrop-filter: blur(20px) !important;
@@ -32,37 +31,34 @@ def apply_dynamic_css(condition_desc):
             padding: 40px !important;
             max-width: 450px !important;
             margin-top: 40px !important;
-            margin-bottom: 40px !important;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
         }}
 
-        /* 3. Global Text Colors */
-        h1, h2, h3, h4, p, span, div {{ color: white !important; }}
+        /* Typography overrides */
+        h1, h2, h3, h4, p, span, div, label {{ color: white !important; font-family: 'Segoe UI', sans-serif; }}
 
-        /* 4. Streamlit Metric Overrides */
-        div[data-testid="stMetricValue"] {{ font-size: 4.5rem !important; font-weight: 800 !important; color: white !important; text-align: center; }}
-        div[data-testid="stMetricLabel"] {{ color: rgba(255,255,255,0.9) !important; font-size: 1.5rem !important; text-align: center; }}
-        div[data-testid="stMetric"] {{ display: flex; flex-direction: column; align-items: center; justify-content: center; }}
+        /* Metric Styling */
+        [data-testid="stMetricValue"] {{ font-size: 4.5rem !important; font-weight: 800 !important; text-align: center; }}
+        [data-testid="stMetricLabel"] {{ font-size: 1.5rem !important; text-align: center; }}
+        [data-testid="stMetric"] {{ display: flex; flex-direction: column; align-items: center; justify-content: center; }}
 
-        /* 5. Custom Widgets */
+        /* Heat Box */
         .heat-box {{
             background-color: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 215, 0, 0.4);
-            padding: 12px; border-radius: 12px; margin-bottom: 20px; text-align: center; cursor: pointer;
+            padding: 12px; border-radius: 12px; margin-bottom: 20px; text-align: center;
         }}
-        .heat-box:hover {{ background-color: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 215, 0, 0.8); }}
 
-        .advice-text {{ font-style: italic; color: rgba(255,255,255,0.9) !important; text-align: center; margin-bottom: 30px; font-size: 14px; }}
+        .advice-text {{ font-style: italic; text-align: center; margin-bottom: 30px; font-size: 14px; opacity: 0.9; }}
 
+        /* Forecast Rows */
         .forecast-row {{
             display: flex; justify-content: space-between; padding: 12px 15px;
-            border-radius: 10px; background: rgba(255, 255, 255, 0.1);
-            margin-bottom: 8px; transition: background 0.3s;
+            border-radius: 10px; background: rgba(255, 255, 255, 0.1); margin-bottom: 8px;
         }}
-        .forecast-row:hover {{ background: rgba(255, 255, 255, 0.25); border: 1px solid rgba(255, 255, 255, 0.5); }}
 
-        /* 6. Clean up native popover and selectbox elements */
-        .stSelectbox > div > div {{ background-color: rgba(255,255,255,0.2) !important; color: white !important; border: 1px solid rgba(255,255,255,0.4) !important; border-radius: 10px !important; }}
-        button[kind="secondary"] {{ background-color: rgba(255,255,255,0.1) !important; border-radius: 10px !important; color: white !important; border: 1px solid rgba(255,255,255,0.3) !important; }}
+        /* Clean up inputs */
+        .stSelectbox div[data-baseweb="select"] > div {{ background-color: rgba(255,255,255,0.2) !important; border: 1px solid rgba(255,255,255,0.4) !important; }}
+        .stButton button {{ background-color: rgba(255,255,255,0.1) !important; border: 1px solid rgba(255,255,255,0.3) !important; width: 100%; border-radius: 10px !important; }}
         </style>
     """, unsafe_allow_html=True)
 
@@ -78,9 +74,6 @@ def render_dashboard(data):
     desc, icon = get_weather_info(code)
     status = get_heat_index_status(feels_like)
     advice = get_weather_advice(desc, status)
-
-    # APPLY CSS FIRST based on the current weather condition
-    apply_dynamic_css(desc)
 
     # 1. Main Weather Section
     st.metric(label=f"{icon} {desc}", value=f"{temp}°C")
@@ -113,15 +106,19 @@ def render_dashboard(data):
     max_temps = daily.get("temperature_2m_max", [])
 
     for i in range(min(7, len(days))):
-        date_obj = datetime.strptime(days[i], "%Y-%m-%d")
-        day_name = date_obj.strftime("%A")
+        try:
+            date_obj = datetime.strptime(days[i], "%Y-%m-%d")
+            day_name = date_obj.strftime("%A")
+        except:
+            day_name = "Day"
+
         d_desc, d_icon = get_weather_info(codes[i])
         d_temp = round(max_temps[i])
 
         st.markdown(f"""
             <div class='forecast-row'>
                 <strong style='width: 90px;'>{day_name}</strong>
-                <span style='flex: 1; text-align: center; color: rgba(255,255,255,0.85) !important;'>{d_icon} {d_desc}</span>
+                <span style='flex: 1; text-align: center;'>{d_icon} {d_desc}</span>
                 <strong>{d_temp}°C</strong>
             </div>
         """, unsafe_allow_html=True)
