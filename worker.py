@@ -11,8 +11,6 @@ class WeatherWorker(QThread):
 
     def run(self):
         API_KEY = "db2bbb06ef9c44a0a65223312260806"
-
-        # We target the city inside Cavite explicitly for extreme accuracy
         url = f"http://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={self.city},Cavite&days=7&aqi=no"
 
         try:
@@ -32,7 +30,6 @@ class WeatherWorker(QThread):
                     "surface_pressure": data["current"]["pressure_mb"]
                 },
                 "daily": {
-                    # Loop through the 7-day forecast array
                     "time": [day["date"] for day in data["forecast"]["forecastday"]],
                     "weather_code": [day["day"]["condition"]["code"] for day in data["forecast"]["forecastday"]],
                     "temperature_2m_max": [day["day"]["maxtemp_c"] for day in data["forecast"]["forecastday"]]

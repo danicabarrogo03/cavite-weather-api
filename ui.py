@@ -239,12 +239,12 @@ class WeatherWidget(QWidget):
 
         self.val_hum.setText("--%")
         self.val_wind.setText("-- km/h")
-        self.val_uv.setText("--")  # FIX: Clear UV Index
+        self.val_uv.setText("--")
         self.val_pres.setText("-- mb")
 
         self.stat_hum.setText("--")
         self.stat_wind.setText("--")
-        self.stat_uv.setText("--")  # FIX: Clear UV Index Status
+        self.stat_uv.setText("--")
         self.stat_pres.setText("--")
 
         if self.worker is not None and self.worker.isRunning():
@@ -272,13 +272,11 @@ class WeatherWidget(QWidget):
         uv = current.get("uv", 0)
         pressure = current.get("surface_pressure", 0)
 
-        # Set Numeric Values
         self.val_hum.setText(f"{humidity}%")
         self.val_wind.setText(f"{wind} km/h")
-        self.val_uv.setText(f"{uv}")  # UV doesn't have units
+        self.val_uv.setText(f"{uv}")
         self.val_pres.setText(f"{round(pressure)} mb")
 
-        # Set Qualitative Indicators
         self.stat_hum.setText(get_humidity_status(humidity))
         self.stat_wind.setText(get_wind_status(wind))
         self.stat_uv.setText(get_uv_status(uv))
