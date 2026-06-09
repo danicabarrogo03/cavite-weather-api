@@ -1,6 +1,6 @@
 import requests
-from PyQt5.QtCore import QThread, pyqtSignal
-from config import CITIES
+from PyQt6.QtCore import QThread, pyqtSignal
+
 
 class WeatherWorker(QThread):
     result = pyqtSignal(dict)
@@ -10,19 +10,36 @@ class WeatherWorker(QThread):
         self.city = city
 
     def run(self):
-        coords = CITIES.get(self.city)
-        if not coords:
-            self.result.emit({})
-            return
+        API_KEY = "db2bbb06ef9c44a0a65223312260806"
 
-        url = f"https://api.open-meteo.com/v1/forecast?latitude={coords['lat']}&longitude={coords['lon']}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,surface_pressure,wind_speed_10m,visibility&daily=weather_code,temperature_2m_max&timezone=Asia%2FManila"
-
-        headers = {"User-Agent": "Mozilla/5.0 (Cavite Weather Widget/1.0)"}
+        # We target the city inside Cavite explicitly for extreme accuracy
+        url = f"http://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={self.city},Cavite&days=7&aqi=no"
 
         try:
-            res = requests.get(url, headers=headers, timeout=5)
+            res = requests.get(url, timeout=5)
             res.raise_for_status()
-            self.result.emit(res.json())
+            data = res.json()
+
+            mapped_data = {
+                "current": {
+                    "temperature_2m": data["current"]["temp_c"],
+                    "apparent_temperature": data["current"]["feelslike_c"],
+                    "weather_code": data["current"]["condition"]["code"],
+                    "text": data["current"]["condition"]["text"],
+                    "relative_humidity_2m": data["current"]["humidity"],
+                    "wind_speed_10m": data["current"]["wind_kph"],
+                    "uv": data["current"]["uv"],
+                    "surface_pressure": data["current"]["pressure_mb"]
+                },
+                "daily": {
+                    # Loop through the 7-day forecast array
+                    "time": [day["date"] for day in data["forecast"]["forecastday"]],
+                    "weather_code": [day["day"]["condition"]["code"] for day in data["forecast"]["forecastday"]],
+                    "temperature_2m_max": [day["day"]["maxtemp_c"] for day in data["forecast"]["forecastday"]]
+                }
+            }
+            self.result.emit(mapped_data)
+
         except Exception as e:
-            print(f"Network Worker Error: {e}")
+            print(f"WeatherAPI Worker Error: {e}")
             self.result.emit({})

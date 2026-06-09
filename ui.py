@@ -1,20 +1,19 @@
 from datetime import datetime
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
                              QLabel, QComboBox, QFrame, QSpacerItem, QSizePolicy, QDialog, QPushButton)
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
-from PyQt5.QtGui import QPainter, QLinearGradient
-# --- FIX: Import the new status functions ---
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QPainter, QLinearGradient
 from config import (CITIES, COLORS, get_weather_info, get_bg_category, get_heat_index_status,
                     get_weather_advice, get_humidity_status, get_wind_status,
-                    get_visibility_status, get_pressure_status)
+                    get_uv_status, get_pressure_status)
 from worker import WeatherWorker
 
 
 class HeatIndexDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setFixedSize(360, 440)
         self.setStyleSheet("* { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }")
 
@@ -30,13 +29,13 @@ class HeatIndexDialog(QDialog):
 
         title = QLabel("PAGASA Heat Index")
         title.setStyleSheet("color: #FFD700; font-size: 22px; font-weight: 800; border: none; background: transparent;")
-        title.setAlignment(Qt.AlignCenter)
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
 
         desc = QLabel("Perceived Danger Levels")
         desc.setStyleSheet(
             "color: rgba(255, 255, 255, 0.6); font-size: 13px; font-weight: 500; border: none; background: transparent; margin-bottom: 10px;")
-        desc.setAlignment(Qt.AlignCenter)
+        desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(desc)
 
         levels = [
@@ -57,7 +56,7 @@ class HeatIndexDialog(QDialog):
             lbl_temp = QLabel(temp)
             lbl_temp.setStyleSheet(
                 "color: white; font-size: 15px; font-weight: 500; border: none; background: transparent;")
-            lbl_temp.setAlignment(Qt.AlignRight)
+            lbl_temp.setAlignment(Qt.AlignmentFlag.AlignRight)
 
             row.addWidget(lbl_status)
             row.addWidget(lbl_temp)
@@ -71,7 +70,7 @@ class HeatIndexDialog(QDialog):
         layout.addStretch()
 
         close_btn = QPushButton("Got it")
-        close_btn.setCursor(Qt.PointingHandCursor)
+        close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         close_btn.setStyleSheet("""
             QPushButton { background-color: rgba(255, 215, 0, 0.15); color: #FFD700; font-size: 15px; font-weight: bold; padding: 10px; border-radius: 10px; border: 1px solid rgba(255, 215, 0, 0.3); }
             QPushButton:hover { background-color: rgba(255, 215, 0, 0.3); border: 1px solid rgba(255, 215, 0, 0.8); }
@@ -84,7 +83,7 @@ class ClickableFrame(QFrame):
     clicked = pyqtSignal()
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit()
         super().mousePressEvent(event)
 
@@ -98,30 +97,28 @@ class WeatherWidget(QWidget):
         self.setup_auto_refresh()
 
     def create_detail_card(self, title, initial_val, initial_status="--"):
-        """Helper function to generate the glassmorphism grid cards WITH context indicator."""
         card = QFrame()
         card.setStyleSheet("""
             QFrame { background-color: rgba(0, 0, 0, 0.2); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.15); }
         """)
         layout = QVBoxLayout(card)
         layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(2)  # Keep items tight together
+        layout.setSpacing(2)
 
         lbl_title = QLabel(title)
         lbl_title.setStyleSheet(
             "color: rgba(255, 255, 255, 0.7); font-size: 12px; border: none; background: transparent;")
-        lbl_title.setAlignment(Qt.AlignCenter)
+        lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         lbl_val = QLabel(initial_val)
         lbl_val.setStyleSheet(
             "color: white; font-size: 16px; font-weight: bold; border: none; background: transparent;")
-        lbl_val.setAlignment(Qt.AlignCenter)
+        lbl_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # --- FIX: Add the new Indicator/Status label ---
         lbl_status = QLabel(initial_status)
         lbl_status.setStyleSheet(
             "color: rgba(255, 255, 255, 0.9); font-size: 11px; font-weight: 500; border: none; background: transparent;")
-        lbl_status.setAlignment(Qt.AlignCenter)
+        lbl_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         layout.addWidget(lbl_title)
         layout.addWidget(lbl_val)
@@ -129,9 +126,9 @@ class WeatherWidget(QWidget):
         return card, lbl_val, lbl_status
 
     def initUI(self):
-        self.setWindowFlags(Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.resize(450, 840)  # Slightly taller to fit the 3rd row of text
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.resize(450, 840)
         self.setStyleSheet("* { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }")
 
         main_layout = QVBoxLayout()
@@ -156,36 +153,33 @@ class WeatherWidget(QWidget):
 
         self.temp_label = QLabel("--°C")
         self.temp_label.setStyleSheet("color: white; font-size: 90px; font-weight: 800; letter-spacing: -2px;")
-        self.temp_label.setAlignment(Qt.AlignCenter)
+        self.temp_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         weather_container.addWidget(self.temp_label)
 
         self.cond_label = QLabel("Initializing...")
         self.cond_label.setStyleSheet(
             "color: rgba(255, 255, 255, 0.9); font-size: 22px; font-weight: 500; margin-bottom: 15px;")
-        self.cond_label.setAlignment(Qt.AlignCenter)
+        self.cond_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         weather_container.addWidget(self.cond_label)
 
         main_layout.addLayout(weather_container)
 
-        # --- 2x2 Details Grid Setup ---
         self.details_layout = QGridLayout()
         self.details_layout.setSpacing(10)
-
         self.card_hum, self.val_hum, self.stat_hum = self.create_detail_card("💦 Humidity", "--%")
         self.card_wind, self.val_wind, self.stat_wind = self.create_detail_card("💨 Wind", "-- km/h")
-        self.card_vis, self.val_vis, self.stat_vis = self.create_detail_card("👁️ Visibility", "-- km")
+        self.card_uv, self.val_uv, self.stat_uv = self.create_detail_card("☀️ UV Index", "--")
         self.card_pres, self.val_pres, self.stat_pres = self.create_detail_card("🌡️ Pressure", "-- mb")
 
         self.details_layout.addWidget(self.card_hum, 0, 0)
         self.details_layout.addWidget(self.card_wind, 0, 1)
-        self.details_layout.addWidget(self.card_vis, 1, 0)
+        self.details_layout.addWidget(self.card_uv, 1, 0)
         self.details_layout.addWidget(self.card_pres, 1, 1)
 
         main_layout.addLayout(self.details_layout)
-        # ------------------------------
 
         self.heat_index_frame = ClickableFrame()
-        self.heat_index_frame.setCursor(Qt.PointingHandCursor)
+        self.heat_index_frame.setCursor(Qt.CursorShape.PointingHandCursor)
         self.heat_index_frame.setStyleSheet("""
             QFrame { background-color: rgba(0, 0, 0, 0.25); border-radius: 12px; border: 1px solid rgba(255, 215, 0, 0.3); }
             QFrame:hover { background-color: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 215, 0, 0.8); }
@@ -197,7 +191,7 @@ class WeatherWidget(QWidget):
         self.heat_index_label = QLabel("Heat Index: --°C")
         self.heat_index_label.setStyleSheet(
             "color: #FFD700; font-size: 16px; font-weight: bold; background: transparent;")
-        self.heat_index_label.setAlignment(Qt.AlignCenter)
+        self.heat_index_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         heat_layout.addWidget(self.heat_index_label)
         self.heat_index_frame.setLayout(heat_layout)
@@ -206,11 +200,11 @@ class WeatherWidget(QWidget):
         self.advice_label = QLabel("Fetching local conditions...")
         self.advice_label.setStyleSheet(
             "color: rgba(255, 255, 255, 0.95); font-size: 14px; font-weight: 500; font-style: italic;")
-        self.advice_label.setAlignment(Qt.AlignCenter)
+        self.advice_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.advice_label.setWordWrap(True)
         main_layout.addWidget(self.advice_label)
 
-        main_layout.addSpacerItem(QSpacerItem(20, 15, QSizePolicy.Minimum, QSizePolicy.Fixed))
+        main_layout.addSpacerItem(QSpacerItem(20, 15, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
 
         forecast_title = QLabel("7-Day Forecast")
         forecast_title.setStyleSheet(
@@ -226,7 +220,7 @@ class WeatherWidget(QWidget):
 
     def show_heat_info_popup(self):
         dialog = HeatIndexDialog(self)
-        dialog.exec_()
+        dialog.exec()
 
     def setup_auto_refresh(self):
         self.refresh_timer = QTimer(self)
@@ -240,6 +234,18 @@ class WeatherWidget(QWidget):
 
     def fetch_weather(self, city):
         self.cond_label.setText("Fetching Live Data...")
+        self.temp_label.setText("--°C")
+        self.heat_index_label.setText("Heat Index: --°C")
+
+        self.val_hum.setText("--%")
+        self.val_wind.setText("-- km/h")
+        self.val_uv.setText("--")  # FIX: Clear UV Index
+        self.val_pres.setText("-- mb")
+
+        self.stat_hum.setText("--")
+        self.stat_wind.setText("--")
+        self.stat_uv.setText("--")  # FIX: Clear UV Index Status
+        self.stat_pres.setText("--")
 
         if self.worker is not None and self.worker.isRunning():
             self.worker.quit()
@@ -261,26 +267,22 @@ class WeatherWidget(QWidget):
         feels_like = round(current.get("apparent_temperature", 0))
         code = current.get("weather_code", 0)
 
-        # --- UPDATE EXTRA DETAILS GRID & INDICATORS ---
         humidity = current.get("relative_humidity_2m", 0)
         wind = current.get("wind_speed_10m", 0)
-        vis_m = current.get("visibility", 0)
+        uv = current.get("uv", 0)
         pressure = current.get("surface_pressure", 0)
-
-        vis_km = round(vis_m / 1000, 1)
 
         # Set Numeric Values
         self.val_hum.setText(f"{humidity}%")
         self.val_wind.setText(f"{wind} km/h")
-        self.val_vis.setText(f"{vis_km} km")
+        self.val_uv.setText(f"{uv}")  # UV doesn't have units
         self.val_pres.setText(f"{round(pressure)} mb")
 
         # Set Qualitative Indicators
         self.stat_hum.setText(get_humidity_status(humidity))
         self.stat_wind.setText(get_wind_status(wind))
-        self.stat_vis.setText(get_visibility_status(vis_km))
+        self.stat_uv.setText(get_uv_status(uv))
         self.stat_pres.setText(get_pressure_status(pressure))
-        # ----------------------------------
 
         desc, icon = get_weather_info(code)
         self.current_condition = desc
@@ -316,10 +318,10 @@ class WeatherWidget(QWidget):
                 "color: white; font-size: 15px; font-weight: bold; width: 45px; background: transparent;")
             lbl_cond = QLabel(f"{day_icon} {day_desc}")
             lbl_cond.setStyleSheet("color: rgba(255, 255, 255, 0.85); font-size: 14px; background: transparent;")
-            lbl_cond.setAlignment(Qt.AlignCenter)
+            lbl_cond.setAlignment(Qt.AlignmentFlag.AlignCenter)
             lbl_temp = QLabel(f"{day_temp}°C")
             lbl_temp.setStyleSheet("color: white; font-size: 15px; font-weight: bold; background: transparent;")
-            lbl_temp.setAlignment(Qt.AlignRight)
+            lbl_temp.setAlignment(Qt.AlignmentFlag.AlignRight)
 
             row.addWidget(lbl_day)
             row.addWidget(lbl_cond)
@@ -335,7 +337,7 @@ class WeatherWidget(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         bg_category = get_bg_category(self.current_condition)
         grad_colors = COLORS.get(bg_category, COLORS["Sunny"])
@@ -345,5 +347,5 @@ class WeatherWidget(QWidget):
         gradient.setColorAt(1.0, grad_colors[1])
 
         painter.setBrush(gradient)
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.PenStyle.NoPen)
         painter.drawRoundedRect(self.rect(), 24, 24)

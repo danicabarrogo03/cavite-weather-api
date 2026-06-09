@@ -1,6 +1,6 @@
 import sys
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QFont
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtGui import QFont
 from ui import WeatherWidget
 
 if __name__ == '__main__':
@@ -11,4 +11,4 @@ if __name__ == '__main__':
 
     window = WeatherWidget()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

@@ -1,11 +1,10 @@
-from PyQt5.QtGui import QColor
+from PyQt6.QtGui import QColor
 
-# --- LIVE DATA CONFIGURATION (District 1 Cavite) ---
 CITIES = {
-    "Cavite City": {"lat": 14.4791, "lon": 120.8976},
-    "Kawit": {"lat": 14.4444, "lon": 120.9038},
-    "Noveleta": {"lat": 14.4283, "lon": 120.8809},
-    "Rosario": {"lat": 14.4150, "lon": 120.8550}
+    "Cavite City": {"lat": 14.4833, "lon": 120.9000},
+    "Kawit": {"lat": 14.4455, "lon": 120.9045},
+    "Noveleta": {"lat": 14.4290, "lon": 120.8785},
+    "Rosario": {"lat": 14.4135, "lon": 120.8595}
 }
 
 COLORS = {
@@ -15,13 +14,13 @@ COLORS = {
 }
 
 def get_weather_info(code):
-    if code == 0: return "Sunny", "☀️"
-    if code in [1, 2, 3]: return "Partly Cloudy", "⛅"
-    if code in [45, 48]: return "Foggy", "🌫️"
-    if code in [51, 53, 55, 56, 57]: return "Drizzle", "🌦️"
-    if code in [61, 63, 65, 66, 67]: return "Rainy", "🌧️"
-    if code in [80, 81, 82]: return "Showers", "☔"
-    if code in [95, 96, 99]: return "Thunderstorm", "⛈️"
+    if code == 1000: return "Sunny", "☀️"
+    if code in [1003, 1006, 1009]: return "Partly Cloudy", "⛅"
+    if code in [1030, 1135, 1147]: return "Foggy", "🌫️"
+    if code in [1063, 1150, 1153, 1180, 1183]: return "Drizzle", "🌦️"
+    if code in [1186, 1189, 1192, 1195, 1240, 1243]: return "Rainy", "🌧️"
+    if code in [1246, 1249, 1252]: return "Showers", "☔"
+    if code in [1087, 1273, 1276, 1279, 1282]: return "Thunderstorm", "⛈️"
     return "Cloudy", "☁️"
 
 def get_bg_category(desc):
@@ -60,12 +59,14 @@ def get_wind_status(wind_speed):
     if wind_speed <= 24: return "Breezy"
     return "Windy"
 
-def get_visibility_status(vis_km):
-    if vis_km < 2: return "Poor"
-    if vis_km <= 5: return "Moderate"
-    return "Good"
+def get_uv_status(uv):
+    if uv <= 2: return "Low"
+    if uv <= 5: return "Moderate"
+    if uv <= 7: return "High"
+    if uv <= 10: return "Very High"
+    return "Extreme"
 
 def get_pressure_status(pressure):
-    if pressure < 1000: return "Low"
+    if pressure < 1009: return "Low"
     if pressure <= 1020: return "Normal"
     return "High"
